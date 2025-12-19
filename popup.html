@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LinkedIn Profile Downloader</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f3f6f8;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      margin: 0 0 5px 0;
+      font-weight: 600;
+    }
+
+    .header p {
+      font-size: 12px;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .page-info {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .page-info h2 {
+      font-size: 14px;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+
+    .page-info .info-text {
+      font-size: 14px;
+      color: #0077B5;
+      font-weight: 600;
+    }
+
+    .page-info .sub-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .not-on-linkedin {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .not-on-linkedin svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .section h3 {
+      font-size: 13px;
+      margin: 0 0 10px 0;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-group:last-child {
+      margin-bottom: 0;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0077B5;
+    }
+
+    .checkbox-group label {
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%);
+      color: white;
+      border: none;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 119, 181, 0.4);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stop-btn {
+      background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .stop-btn:hover {
+      box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+    }
+
+    .stop-btn.active {
+      display: flex;
+    }
+
+    .secondary-btn {
+      background: white;
+      color: #0077B5;
+      border: 2px solid #0077B5;
+      margin-top: 10px;
+    }
+
+    .secondary-btn:hover {
+      background: #f0f7fb;
+      transform: translateY(-1px);
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status.info {
+      background-color: #e3f2fd;
+      color: #1565c0;
+      display: block;
+    }
+
+    .status.success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+
+    .progress {
+      margin-top: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar.active {
+      display: block;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%);
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .info-text-box {
+      font-size: 12px;
+      color: #666;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      padding: 15px 0;
+      border-top: 1px solid #eee;
+      margin-top: 10px;
+    }
+
+    .stat-item {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #0077B5;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .footer {
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 11px;
+      color: #999;
+      border-top: 1px solid #eee;
+      background: white;
+    }
+
+    .footer a {
+      color: #0077B5;
+      text-decoration: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>LinkedIn Profile Downloader</h1>
+    <p>Bulk download profiles for candidate analysis</p>
+  </div>
+
+  <div class="content">
+    <!-- Page Info Section -->
+    <div id="pageInfo" class="page-info" style="display: none;">
+      <h2>Current Page</h2>
+      <div id="pageInfoText" class="info-text">-</div>
+      <div id="pageInfoSub" class="sub-info"></div>
+    </div>
+
+    <!-- Not on LinkedIn Message -->
+    <div id="notOnLinkedIn" class="not-on-linkedin" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>Please navigate to LinkedIn</p>
+    </div>
+
+    <!-- Main Controls -->
+    <div id="mainControls" style="display: none;">
+      <div class="section">
+        <h3>Download Settings</h3>
+        <label for="maxProfiles">Maximum profiles to download:</label>
+        <input type="number" id="maxProfiles" min="1" value="100" placeholder="Leave empty for all">
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="autoScroll" checked>
+          <label for="autoScroll">Auto-scroll to load all profiles</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="openProfiles">
+          <label for="openProfiles">Open each profile for full data</label>
+        </div>
+      </div>
+
+      <div class="info-text-box">
+        Random delay: 5-14 seconds between profiles to avoid rate limiting
+      </div>
+
+      <button id="startBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Start Downloading
+      </button>
+
+      <button id="stopBtn" class="stop-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="6" width="12" height="12"></rect>
+        </svg>
+        Stop Download
+      </button>
+
+      <div id="status" class="status"></div>
+
+      <div class="progress">
+        <div id="progressBar" class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Single Profile Controls (shown on profile pages) -->
+    <div id="singleProfileControls" style="display: none;">
+      <button id="downloadBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download This Profile
+      </button>
+
+      <button id="extractBtn" class="secondary-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        Extract Data Only
+      </button>
+
+      <div id="singleStatus" class="status"></div>
+    </div>
+
+    <!-- Saved Profiles Section -->
+    <div class="section" style="margin-top: 15px;">
+      <h3>Saved Profiles</h3>
+      <div class="stats">
+        <div class="stat-item">
+          <div id="totalProfiles" class="stat-value">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div id="todayProfiles" class="stat-value">0</div>
+          <div class="stat-label">Today</div>
+        </div>
+      </div>
+      <button id="exportBtn" class="secondary-btn" style="margin-top: 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        Export to CSV
+      </button>
+      <button id="clearBtn" class="secondary-btn" style="margin-top: 10px; color: #d32f2f; border-color: #d32f2f;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Clear All Data
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Bulk download LinkedIn profiles for candidate analysis
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

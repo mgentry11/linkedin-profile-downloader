@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create LinkedIn Extension Icons</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    .canvas-container { display: flex; gap: 20px; flex-wrap: wrap; }
+    canvas { border: 1px solid #ccc; background: white; }
+    .download-links { margin-top: 20px; }
+    .download-links a { margin-right: 15px; }
+  </style>
+</head>
+<body>
+  <h1>LinkedIn Profile Downloader Icons</h1>
+  <p>Right-click each canvas and "Save image as..." to download</p>
+
+  <div class="canvas-container">
+    <div>
+      <h3>16x16</h3>
+      <canvas id="icon16" width="16" height="16"></canvas>
+    </div>
+    <div>
+      <h3>48x48</h3>
+      <canvas id="icon48" width="48" height="48"></canvas>
+    </div>
+    <div>
+      <h3>128x128</h3>
+      <canvas id="icon128" width="128" height="128"></canvas>
+    </div>
+  </div>
+
+  <div class="download-links">
+    <a id="link16" download="icon16.png">Download 16x16</a>
+    <a id="link48" download="icon48.png">Download 48x48</a>
+    <a id="link128" download="icon128.png">Download 128x128</a>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const scale = size / 128;
+
+      // Background - LinkedIn blue gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#0077B5');
+      gradient.addColorStop(1, '#00A0DC');
+      ctx.fillStyle = gradient;
+
+      // Rounded rectangle
+      const radius = size * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.fill();
+
+      // Download arrow icon
+      ctx.strokeStyle = 'white';
+      ctx.fillStyle = 'white';
+      ctx.lineWidth = size * 0.08;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const arrowSize = size * 0.3;
+
+      // Arrow line
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - arrowSize);
+      ctx.lineTo(centerX, centerY + arrowSize * 0.5);
+      ctx.stroke();
+
+      // Arrow head
+      ctx.beginPath();
+      ctx.moveTo(centerX - arrowSize * 0.5, centerY);
+      ctx.lineTo(centerX, centerY + arrowSize * 0.5);
+      ctx.lineTo(centerX + arrowSize * 0.5, centerY);
+      ctx.stroke();
+
+      // Bottom line (download bar)
+      ctx.beginPath();
+      ctx.moveTo(centerX - arrowSize * 0.7, centerY + arrowSize * 0.8);
+      ctx.lineTo(centerX + arrowSize * 0.7, centerY + arrowSize * 0.8);
+      ctx.stroke();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    // Draw all sizes
+    const sizes = [16, 48, 128];
+    sizes.forEach(size => {
+      const canvas = document.getElementById('icon' + size);
+      const dataUrl = drawIcon(canvas, size);
+      document.getElementById('link' + size).href = dataUrl;
+    });
+  </script>
+</body>
+</html>

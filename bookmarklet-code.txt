@@ -1,0 +1,31 @@
+LINKEDIN PDF DOWNLOADER (Simple Version)
+=========================================
+
+One bookmarklet - use on public profile pages only.
+
+User workflow:
+1. On Recruiter page, manually click "View public profile" link
+2. On public profile page, click the bookmark
+3. Click "Download PDF" button
+4. Done - close tab, repeat
+
+================================================================================
+BOOKMARKLET - Save as "Download PDF"
+================================================================================
+
+javascript:(function(){var old=document.getElementById('lipdf');if(old)old.remove();var d=document.createElement('div');d.id='lipdf';d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);width:260px;font-family:system-ui';var header=document.createElement('div');header.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:15px';header.innerHTML="<h3 style='margin:0;color:#0077B5'>Download PDF</h3>";var closeBtn=document.createElement('span');closeBtn.textContent='X';closeBtn.style.cssText='cursor:pointer;font-size:18px;font-weight:bold';closeBtn.addEventListener('click',function(){d.remove()});header.appendChild(closeBtn);d.appendChild(header);var btn=document.createElement('button');btn.textContent='Save Profile as PDF';btn.style.cssText='width:100%;padding:14px;background:linear-gradient(135deg,#0077B5,#00A0DC);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:15px';btn.addEventListener('click',function(){d.remove();var moreBtn=document.querySelector('button[aria-label="More actions"]');if(moreBtn){moreBtn.click();setTimeout(function(){var items=document.querySelectorAll('span');for(var i=0;i<items.length;i++){if(items[i].textContent.trim()==='Save to PDF'){items[i].click();return}}alert('Save to PDF not found')},700)}else{alert('Not on a public profile page')}});d.appendChild(btn);document.body.appendChild(d)})()
+
+================================================================================
+
+HOW TO SET UP:
+1. Cmd+Shift+O (Mac) or Ctrl+Shift+O (Windows) → Bookmark Manager
+2. Right-click → Add new bookmark
+3. Name: Download PDF
+4. URL: Paste the javascript: code above
+5. Save
+
+HOW TO USE:
+1. On Recruiter page, click "View public profile" link at bottom
+2. On public profile page, click "Download PDF" bookmark
+3. Click the "Save Profile as PDF" button
+4. Close tab, go to next candidate

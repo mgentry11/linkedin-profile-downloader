@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 350px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 16px;
+      color: #0077B5;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h1::before {
+      content: "📄";
+    }
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .section-title {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #0077B5;
+      background: #f0f7ff;
+    }
+    .drop-zone p {
+      color: #666;
+      font-size: 13px;
+    }
+    .drop-zone input {
+      display: none;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0077B5, #00A0DC);
+      color: white;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #e9ecef;
+      color: #495057;
+      margin-top: 8px;
+    }
+    .btn-secondary:hover {
+      background: #dee2e6;
+    }
+    .status {
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+      display: none;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    .status.info {
+      background: #cce5ff;
+      color: #004085;
+      display: block;
+    }
+    .file-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .file-item .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-item .status-icon {
+      margin-left: 8px;
+    }
+    .settings {
+      font-size: 12px;
+    }
+    .settings input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .settings label {
+      display: block;
+      margin-top: 8px;
+      color: #495057;
+    }
+    .connected {
+      color: #28a745;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .not-connected {
+      color: #dc3545;
+      font-size: 12px;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #666;
+    }
+    .stats span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>LinkedIn PDF Parser</h1>
+
+  <div class="section">
+    <div class="section-title">Google Sheets</div>
+    <div id="authStatus" class="not-connected">Not connected</div>
+    <button id="authBtn" class="btn-primary" style="margin-top: 8px">Connect Google Account</button>
+    <div class="settings" id="sheetSettings" style="display: none;">
+      <label>
+        Spreadsheet ID:
+        <input type="text" id="spreadsheetId" placeholder="From URL: docs.google.com/spreadsheets/d/[ID]/edit">
+      </label>
+      <button id="saveSettings" class="btn-secondary">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Upload PDFs</div>
+    <div class="drop-zone" id="dropZone">
+      <p>Drag & drop LinkedIn PDFs here<br>or click to select</p>
+      <input type="file" id="fileInput" multiple accept=".pdf">
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <button id="processBtn" class="btn-primary" style="margin-top: 12px" disabled>Process & Upload</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Recent Activity</div>
+    <div class="stats">
+      <span>📊 <span id="totalProcessed">0</span> processed</span>
+      <span>📅 <span id="lastUpload">Never</span></span>
+    </div>
+  </div>
+
+  <script src="pdf.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

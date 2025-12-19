@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Profile Downloader - Install Bookmarklet</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f3f6f8 0%, #e8f4f8 100%);
+            min-height: 100vh;
+        }
+        .header { text-align: center; margin-bottom: 40px; }
+        h1 { color: #0077B5; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { color: #666; font-size: 18px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 119, 181, 0.1);
+        }
+        .card h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #0077B5;
+            padding-bottom: 10px;
+        }
+        .method { margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        .method h3 { color: #0077B5; margin-top: 0; }
+        .code-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 15px 0;
+        }
+        .copy-btn {
+            background: #0077B5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .copy-btn:hover { background: #005885; }
+        .steps { counter-reset: step; list-style: none; padding: 0; }
+        .steps li {
+            counter-increment: step;
+            margin-bottom: 20px;
+            padding-left: 50px;
+            position: relative;
+        }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 35px;
+            height: 35px;
+            background: #0077B5;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #0077B5;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        kbd {
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        .test-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,119,181,0.4); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LinkedIn Profile Downloader</h1>
+        <p class="subtitle">Save LinkedIn profiles with one click - Export to CSV anytime</p>
+    </div>
+
+    <div class="card">
+        <h2>Installation Instructions</h2>
+
+        <div class="warning">
+            <strong>Note:</strong> Dragging bookmarklets doesn't always work in all browsers. Use one of the methods below to install manually.
+        </div>
+
+        <!-- METHOD 1: Manual Bookmark -->
+        <div class="method">
+            <h3>Method 1: Create Bookmark Manually (Recommended)</h3>
+            <ol class="steps">
+                <li>
+                    <strong>Create a new bookmark</strong><br>
+                    Press <kbd>Cmd+D</kbd> (Mac) or <kbd>Ctrl+D</kbd> (Windows) to bookmark this page
+                </li>
+                <li>
+                    <strong>Edit the bookmark</strong><br>
+                    Open your bookmarks manager (<kbd>Cmd+Shift+O</kbd> on Mac, <kbd>Ctrl+Shift+O</kbd> on Windows)<br>
+                    Find the bookmark you just created and right-click → Edit
+                </li>
+                <li>
+                    <strong>Change the name</strong><br>
+                    Change the name to: <code>Save LinkedIn Profile</code>
+                </li>
+                <li>
+                    <strong>Replace the URL</strong><br>
+                    Delete the current URL and paste the code below:
+                </li>
+            </ol>
+
+            <div class="code-box" id="bookmarklet-code">javascript:(function(){if(!location.href.includes('linkedin.com')){alert('Go to LinkedIn first!');return;}var k='li_profiles',d=JSON.parse(localStorage.getItem(k)||'[]'),u=document.getElementById('li-dl-ui');if(u)u.remove();var p=location.href.includes('/in/')&&!location.href.includes('/search/');var h='<div style="position:fixed;top:20px;right:20px;z-index:99999;background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.2);width:320px;font-family:system-ui,sans-serif"><div style="display:flex;justify-content:space-between;margin-bottom:15px"><b style="color:#0077B5;font-size:16px">LinkedIn Downloader</b><span id="li-x" style="cursor:pointer;font-size:20px">&times;</span></div><div id="li-msg" style="padding:10px;background:#e3f2fd;border-radius:6px;margin-bottom:15px;font-size:13px">'+(p?'Ready to extract':'Go to a profile page')+'</div><div style="text-align:center;padding:15px;background:#f5f5f5;border-radius:8px;margin-bottom:15px"><div style="font-size:28px;font-weight:bold;color:#0077B5">'+d.length+'</div><div style="font-size:12px;color:#666">Profiles Saved</div></div>'+(p?'<button id="li-go" style="width:100%;padding:12px;background:linear-gradient(135deg,#0077B5,#00A0DC);color:#fff;border:none;border-radius:20px;font-weight:600;cursor:pointer;font-size:14px">Extract This Profile</button>':'')+'<button id="li-csv" style="width:100%;padding:10px;background:#fff;color:#0077B5;border:2px solid #0077B5;border-radius:20px;font-weight:600;cursor:pointer;margin-top:10px;font-size:13px"'+(d.length?'':' disabled style="opacity:.5;width:100%;padding:10px;background:#fff;color:#0077B5;border:2px solid #0077B5;border-radius:20px;font-weight:600;margin-top:10px;font-size:13px"')+'>Export '+d.length+' to CSV</button><div id="li-clr" style="text-align:center;margin-top:10px;font-size:11px;color:#999;cursor:pointer">Clear All</div></div>';var box=document.createElement('div');box.id='li-dl-ui';box.innerHTML=h;document.body.appendChild(box);document.getElementById('li-x').onclick=function(){box.remove();};document.getElementById('li-clr').onclick=function(){if(confirm('Delete all?')){localStorage.removeItem(k);location.reload();}};if(document.getElementById('li-csv'))document.getElementById('li-csv').onclick=function(){var arr=JSON.parse(localStorage.getItem(k)||'[]');if(!arr.length)return;var csv='Name,Headline,Location,Title,Company,URL,Date\\n';arr.forEach(function(r){csv+='"'+(r.n||'').replace(/"/g,'""')+'","'+(r.h||'').replace(/"/g,'""')+'","'+(r.l||'').replace(/"/g,'""')+'","'+(r.t||'').replace(/"/g,'""')+'","'+(r.c||'').replace(/"/g,'""')+'","'+(r.u||'')+'","'+(r.d||'')+'"\\n';});var b=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='linkedin_'+new Date().toISOString().slice(0,10)+'.csv';a.click();};if(document.getElementById('li-go'))document.getElementById('li-go').onclick=function(){var o={n:'',h:'',l:'',t:'',c:'',u:location.href,d:new Date().toISOString().slice(0,10)};var el=document.querySelector('h1.text-heading-xlarge')||document.querySelector('.text-heading-xlarge');if(el)o.n=el.textContent.trim();el=document.querySelector('.text-body-medium.break-words');if(el)o.h=el.textContent.trim();el=document.querySelector('.text-body-small.inline.t-black--light.break-words');if(el)o.l=el.textContent.trim();var exp=document.querySelector('#experience');if(exp){var li=exp.parentElement.querySelector('li.artdeco-list__item');if(li){var ti=li.querySelector('.t-bold span[aria-hidden=true]');var co=li.querySelector('.t-normal span[aria-hidden=true]');if(ti)o.t=ti.textContent.trim();if(co)o.c=co.textContent.trim();}}var arr=JSON.parse(localStorage.getItem(k)||'[]');var idx=arr.findIndex(function(x){return x.u===o.u;});if(idx>=0)arr[idx]=o;else arr.push(o);localStorage.setItem(k,JSON.stringify(arr));document.getElementById('li-msg').textContent='Saved: '+o.n;document.getElementById('li-msg').style.background='#e8f5e9';setTimeout(function(){location.reload();},1000);};})();</div>
+
+            <button class="copy-btn" onclick="copyCode()">Copy Code</button>
+
+            <div class="success" style="margin-top:15px">
+                <strong>Done!</strong> Save the bookmark. Now go to LinkedIn and click it!
+            </div>
+        </div>
+
+        <!-- METHOD 2: Test Button -->
+        <div class="method">
+            <h3>Method 2: Test It First</h3>
+            <p>Click this button to test the bookmarklet on this page (will show an alert since you're not on LinkedIn):</p>
+            <button class="test-btn" onclick="testBookmarklet()">Test Bookmarklet</button>
+            <p style="color:#666;font-size:13px;margin-top:10px">If a popup appears, the code works. Then use Method 1 to save it as a bookmark.</p>
+        </div>
+
+        <!-- METHOD 3: Console -->
+        <div class="method">
+            <h3>Method 3: Run Directly in Console</h3>
+            <ol class="steps">
+                <li>Go to a LinkedIn profile page</li>
+                <li>Open Developer Tools: <kbd>Cmd+Option+J</kbd> (Mac) or <kbd>F12</kbd> (Windows)</li>
+                <li>Click the "Console" tab</li>
+                <li>Paste the code below and press Enter</li>
+            </ol>
+
+            <div class="code-box" id="console-code">(function(){if(!location.href.includes('linkedin.com')){alert('Go to LinkedIn first!');return;}var k='li_profiles',d=JSON.parse(localStorage.getItem(k)||'[]'),u=document.getElementById('li-dl-ui');if(u)u.remove();var p=location.href.includes('/in/')&&!location.href.includes('/search/');var h='<div style="position:fixed;top:20px;right:20px;z-index:99999;background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.2);width:320px;font-family:system-ui,sans-serif"><div style="display:flex;justify-content:space-between;margin-bottom:15px"><b style="color:#0077B5;font-size:16px">LinkedIn Downloader</b><span id="li-x" style="cursor:pointer;font-size:20px">&times;</span></div><div id="li-msg" style="padding:10px;background:#e3f2fd;border-radius:6px;margin-bottom:15px;font-size:13px">'+(p?'Ready to extract':'Go to a profile page')+'</div><div style="text-align:center;padding:15px;background:#f5f5f5;border-radius:8px;margin-bottom:15px"><div style="font-size:28px;font-weight:bold;color:#0077B5">'+d.length+'</div><div style="font-size:12px;color:#666">Profiles Saved</div></div>'+(p?'<button id="li-go" style="width:100%;padding:12px;background:linear-gradient(135deg,#0077B5,#00A0DC);color:#fff;border:none;border-radius:20px;font-weight:600;cursor:pointer;font-size:14px">Extract This Profile</button>':'')+'<button id="li-csv" style="width:100%;padding:10px;background:#fff;color:#0077B5;border:2px solid #0077B5;border-radius:20px;font-weight:600;cursor:pointer;margin-top:10px;font-size:13px"'+(d.length?'':' disabled style="opacity:.5;width:100%;padding:10px;background:#fff;color:#0077B5;border:2px solid #0077B5;border-radius:20px;font-weight:600;margin-top:10px;font-size:13px"')+'>Export '+d.length+' to CSV</button><div id="li-clr" style="text-align:center;margin-top:10px;font-size:11px;color:#999;cursor:pointer">Clear All</div></div>';var box=document.createElement('div');box.id='li-dl-ui';box.innerHTML=h;document.body.appendChild(box);document.getElementById('li-x').onclick=function(){box.remove();};document.getElementById('li-clr').onclick=function(){if(confirm('Delete all?')){localStorage.removeItem(k);location.reload();}};if(document.getElementById('li-csv'))document.getElementById('li-csv').onclick=function(){var arr=JSON.parse(localStorage.getItem(k)||'[]');if(!arr.length)return;var csv='Name,Headline,Location,Title,Company,URL,Date\\n';arr.forEach(function(r){csv+='"'+(r.n||'').replace(/"/g,'""')+'","'+(r.h||'').replace(/"/g,'""')+'","'+(r.l||'').replace(/"/g,'""')+'","'+(r.t||'').replace(/"/g,'""')+'","'+(r.c||'').replace(/"/g,'""')+'","'+(r.u||'')+'","'+(r.d||'')+'"\\n';});var b=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='linkedin_'+new Date().toISOString().slice(0,10)+'.csv';a.click();};if(document.getElementById('li-go'))document.getElementById('li-go').onclick=function(){var o={n:'',h:'',l:'',t:'',c:'',u:location.href,d:new Date().toISOString().slice(0,10)};var el=document.querySelector('h1.text-heading-xlarge')||document.querySelector('.text-heading-xlarge');if(el)o.n=el.textContent.trim();el=document.querySelector('.text-body-medium.break-words');if(el)o.h=el.textContent.trim();el=document.querySelector('.text-body-small.inline.t-black--light.break-words');if(el)o.l=el.textContent.trim();var exp=document.querySelector('#experience');if(exp){var li=exp.parentElement.querySelector('li.artdeco-list__item');if(li){var ti=li.querySelector('.t-bold span[aria-hidden=true]');var co=li.querySelector('.t-normal span[aria-hidden=true]');if(ti)o.t=ti.textContent.trim();if(co)o.c=co.textContent.trim();}}var arr=JSON.parse(localStorage.getItem(k)||'[]');var idx=arr.findIndex(function(x){return x.u===o.u;});if(idx>=0)arr[idx]=o;else arr.push(o);localStorage.setItem(k,JSON.stringify(arr));document.getElementById('li-msg').textContent='Saved: '+o.n;document.getElementById('li-msg').style.background='#e8f5e9';setTimeout(function(){location.reload();},1000);};})();</div>
+
+            <button class="copy-btn" onclick="copyConsoleCode()">Copy Console Code</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>How to Use</h2>
+        <ol class="steps">
+            <li><strong>Go to a LinkedIn profile page</strong><br>URL should look like: linkedin.com/in/someone</li>
+            <li><strong>Click your bookmarklet</strong> (or paste code in console)<br>A panel appears in the top-right</li>
+            <li><strong>Click "Extract This Profile"</strong><br>Data is saved to your browser</li>
+            <li><strong>Visit more profiles and repeat</strong><br>Counter shows how many you've saved</li>
+            <li><strong>Click "Export to CSV"</strong> when ready<br>Downloads all saved profiles</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>Data Captured</h2>
+        <ul style="line-height:2">
+            <li><strong>Name</strong> - Full name</li>
+            <li><strong>Headline</strong> - Professional tagline</li>
+            <li><strong>Location</strong> - City/Region</li>
+            <li><strong>Current Title</strong> - Job title</li>
+            <li><strong>Current Company</strong> - Employer</li>
+            <li><strong>Profile URL</strong> - Direct link</li>
+            <li><strong>Date</strong> - When extracted</li>
+        </ul>
+        <div class="info">
+            <strong>Tip:</strong> Scroll down on the profile before extracting to make sure all sections are loaded.
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            var code = document.getElementById('bookmarklet-code').textContent;
+            navigator.clipboard.writeText(code).then(function() {
+                alert('Copied! Now paste it as the URL of a new bookmark.');
+            });
+        }
+
+        function copyConsoleCode() {
+            var code = document.getElementById('console-code').textContent;
+            navigator.clipboard.writeText(code).then(function() {
+                alert('Copied! Go to LinkedIn, open console (F12), and paste.');
+            });
+        }
+
+        function testBookmarklet() {
+            if(!location.href.includes('linkedin.com')){
+                alert('This is a test! The bookmarklet works.\n\nNow go to LinkedIn and use it there.');
+                return;
+            }
+        }
+    </script>
+</body>
+</html>
