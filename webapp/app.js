@@ -1,7 +1,7 @@
 // LinkedIn PDF Parser - Web App
 // Configuration - Replace with your Google Cloud credentials
-const CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
-const API_KEY = 'YOUR_API_KEY';
+const CLIENT_ID = '472230349314-bvjvplh0ugpjaslmsgb6oldk79g4rhqq.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyBN7TtouavWOiTbgdqK51fHrN914QMNOUY';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
 
 // Configure PDF.js
@@ -41,32 +41,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Google Auth initialization
 function initGoogleAuth() {
+  console.log('Initializing Google Auth...');
+
+  // Initialize Google Identity Services first
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: handleAuthCallback
+    });
+    console.log('Token client initialized:', tokenClient);
+  } catch (err) {
+    console.error('Token client error:', err);
+  }
+
   // Load the Google API client
   gapi.load('client', async () => {
-    await gapi.client.init({
-      apiKey: API_KEY,
-      discoveryDocs: [
-        'https://sheets.googleapis.com/$discovery/rest?version=v4',
-        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
-      ]
-    });
-  });
+    console.log('GAPI client loaded');
+    try {
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [
+          'https://sheets.googleapis.com/$discovery/rest?version=v4',
+          'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+        ]
+      });
+      console.log('GAPI client initialized');
 
-  // Initialize Google Identity Services
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: handleAuthCallback
+      // Check for existing session AFTER gapi is ready
+      const savedToken = localStorage.getItem('gapi_token');
+      const savedUser = localStorage.getItem('gapi_user');
+      if (savedToken && savedUser) {
+        accessToken = savedToken;
+        gapi.client.setToken({ access_token: savedToken });
+        showMainApp(JSON.parse(savedUser));
+      }
+    } catch (err) {
+      console.error('GAPI init error:', err);
+    }
   });
-
-  // Check for existing session
-  const savedToken = localStorage.getItem('gapi_token');
-  const savedUser = localStorage.getItem('gapi_user');
-  if (savedToken && savedUser) {
-    accessToken = savedToken;
-    gapi.client.setToken({ access_token: savedToken });
-    showMainApp(JSON.parse(savedUser));
-  }
 }
 
 function handleAuthCallback(response) {
@@ -77,6 +90,9 @@ function handleAuthCallback(response) {
 
   accessToken = response.access_token;
   localStorage.setItem('gapi_token', accessToken);
+
+  // Set the token on gapi client for API calls
+  gapi.client.setToken({ access_token: accessToken });
 
   // Get user info
   fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -107,7 +123,14 @@ function signOut() {
 
 // Event Listeners
 function setupEventListeners() {
-  signInBtn.addEventListener('click', () => tokenClient.requestAccessToken());
+  signInBtn.addEventListener('click', () => {
+    console.log('Sign in clicked, tokenClient:', tokenClient);
+    if (tokenClient) {
+      tokenClient.requestAccessToken();
+    } else {
+      alert('Google auth not loaded yet. Please wait a moment and try again.');
+    }
+  });
   signOutBtn.addEventListener('click', signOut);
 
   // Drag and drop
@@ -191,7 +214,9 @@ async function processFiles() {
   try {
     folderId = await getOrCreateFolder('LinkedIn PDFs');
   } catch (err) {
-    showStatus('Error creating Drive folder: ' + err.message, 'error');
+    console.error('Drive folder error:', err);
+    const errMsg = err?.result?.error?.message || err?.message || JSON.stringify(err);
+    showStatus('Error creating Drive folder: ' + errMsg, 'error');
     processBtn.disabled = false;
     return;
   }
@@ -200,7 +225,9 @@ async function processFiles() {
   try {
     await initializeSheet(sheetId);
   } catch (err) {
-    showStatus('Error accessing sheet: ' + err.message, 'error');
+    console.error('Sheet error:', err);
+    const errMsg = err?.result?.error?.message || err?.message || JSON.stringify(err);
+    showStatus('Error accessing sheet: ' + errMsg, 'error');
     processBtn.disabled = false;
     return;
   }
@@ -216,16 +243,16 @@ async function processFiles() {
       // Parse PDF
       const data = await parsePDF(file);
 
-      if (data && data.first_name) {
+      if (data) {
         // Upload to Drive
         const driveLink = await uploadToDrive(file, folderId);
         data.pdf_link = driveLink;
 
-        // Add to Sheet
+        // Add to Sheet (even if parsing incomplete)
         await appendToSheet(sheetId, data);
 
         // Update UI
-        fileItem.querySelector('.status').textContent = '✅';
+        fileItem.querySelector('.status').textContent = data.first_name ? '✅' : '⚠️';
         addToResultsTable(data);
         successCount++;
         sessionCount++;
@@ -255,21 +282,66 @@ async function processFiles() {
 
 // Parse PDF
 async function parsePDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  console.log('Starting PDF parse for:', file.name);
 
-  let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    console.log('Got array buffer, size:', arrayBuffer.byteLength);
+
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    console.log('PDF loaded, pages:', pdf.numPages);
+
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      console.log('Processing page', i);
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+
+      // Better text extraction - preserve structure
+      let lastY = null;
+      for (const item of textContent.items) {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+          fullText += '\n';
+        }
+        fullText += item.str + ' ';
+        lastY = item.transform[5];
+      }
+      fullText += '\n';
+    }
+
+    console.log('=== RAW PDF TEXT (first 1000 chars) ===');
+    console.log(fullText.substring(0, 1000));
+
+    const result = extractLinkedInData(fullText, file.name);
+    console.log('=== PARSED RESULT ===');
+    console.log(JSON.stringify(result, null, 2));
+
+    return result;
+  } catch (err) {
+    console.error('PDF PARSE ERROR:', err);
+    return {
+      first_name: 'PARSE_ERROR',
+      last_name: err.message,
+      full_name: '',
+      linkedin_link: '',
+      headline: '',
+      title: '',
+      company: '',
+      location: '',
+      school: '',
+      degree: '',
+      skills: '',
+      experience: '',
+      source_file: file.name,
+      parsed_at: new Date().toISOString()
+    };
   }
-
-  return extractLinkedInData(fullText, file.name);
 }
 
-// Extract data from LinkedIn PDF text
+// Extract data from LinkedIn PDF text - SIMPLE VERSION (no complex regex)
 function extractLinkedInData(text, filename) {
+  console.log('Starting extractLinkedInData (simple)...');
+
   const data = {
     first_name: '',
     last_name: '',
@@ -282,96 +354,192 @@ function extractLinkedInData(text, filename) {
     school: '',
     degree: '',
     skills: '',
+    experience: '',
     source_file: filename,
     parsed_at: new Date().toISOString()
   };
 
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-
-  // Check if LinkedIn PDF
-  if (!lines.slice(0, 10).some(l => l.toLowerCase().includes('linkedin'))) {
-    return null;
-  }
-
-  // Name
-  for (const line of lines.slice(0, 5)) {
-    if (line.toLowerCase().startsWith('contact')) {
-      const remaining = line.substring(7).trim();
-      if (remaining) {
-        extractName(data, remaining);
-        break;
-      }
-    } else if (!line.startsWith('www.') && !line.startsWith('http') && !line.includes('(LinkedIn)') && line.length > 2) {
-      extractName(data, line);
-      break;
-    }
-  }
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  console.log('Lines count:', lines.length);
 
   // LinkedIn URL
   const urlMatch = text.match(/linkedin\.com\/in\/([a-zA-Z0-9\-]+)/);
   if (urlMatch) {
     data.linkedin_link = `https://www.linkedin.com/in/${urlMatch[1]}`;
   }
+  console.log('Step 1 done - URL');
 
-  // Headline
-  for (const line of lines.slice(0, 15)) {
-    if (line.includes(' at ') && (line.includes('|') || line.length > 20)) {
-      data.headline = line.substring(0, 200);
-      const parts = line.split(' at ');
-      data.title = parts[0].trim();
-      if (parts[1]) data.company = parts[1].split('|')[0].trim();
-      break;
-    }
-  }
+  // Find key section indices
+  let certIdx = lines.findIndex(l => l === 'Certifications');
+  let langIdx = lines.findIndex(l => l === 'Languages');
+  let expIdx = lines.findIndex(l => l === 'Experience');
+  let eduIdx = lines.findIndex(l => l === 'Education');
+  let skillsIdx = lines.findIndex(l => l === 'Top Skills' || l === 'Skills');
+  let summaryIdx = lines.findIndex(l => l === 'Summary');
 
-  // Location
-  for (const line of lines.slice(0, 20)) {
-    if (/^[A-Z][a-z]+,\s*[A-Z]/.test(line) && !line.includes('Summary')) {
-      if (['Australia', 'Canada', 'USA', 'United States', 'UK', 'India', 'Area'].some(loc => line.includes(loc)) ||
-          (line.includes(', ') && line.length < 60)) {
-        data.location = line;
+  console.log('Indices:', { certIdx, langIdx, expIdx, eduIdx, skillsIdx, summaryIdx });
+
+  // Find name - look for a line with 2-3 capitalized words after certifications/languages
+  let nameSearchStart = Math.max(certIdx, langIdx) + 1;
+  if (nameSearchStart < 1) nameSearchStart = 0;
+
+  for (let i = nameSearchStart; i < Math.min(nameSearchStart + 15, lines.length); i++) {
+    const line = lines[i];
+    // Skip common section headers and short lines
+    if (line.length < 4 || line.length > 50) continue;
+    if (['Summary', 'Experience', 'Education', 'Skills', 'Contact'].includes(line)) continue;
+    if (line.includes('(') || line.includes('@') || line.includes('www.')) continue;
+
+    // Check if line looks like a name (2-3 words, starts with capitals)
+    const words = line.split(/\s+/);
+    if (words.length >= 2 && words.length <= 4) {
+      const allCapitalized = words.every(w => w[0] && w[0] === w[0].toUpperCase());
+      const noNumbers = !line.match(/\d/);
+      if (allCapitalized && noNumbers) {
+        data.full_name = line;
+        data.first_name = words[0];
+        data.last_name = words.slice(1).join(' ');
+        console.log('Found name:', data.full_name, 'at line', i);
+
+        // Next line is likely the headline/title
+        if (i + 1 < lines.length) {
+          data.headline = lines[i + 1];
+          // Parse title and company from headline
+          if (data.headline.includes(' at ')) {
+            const parts = data.headline.split(' at ');
+            data.title = parts[0].trim();
+            data.company = parts[1].split('|')[0].trim();
+          } else if (data.headline.includes(' - ')) {
+            const parts = data.headline.split(' - ');
+            data.title = parts[0].trim();
+            data.company = parts[1].split('|')[0].trim();
+          } else if (data.headline.includes(' | ')) {
+            const parts = data.headline.split(' | ');
+            data.title = parts[0].trim();
+            if (parts[1]) data.company = parts[1].trim();
+          }
+        }
+
+        // Line after headline might be location - check next few lines
+        for (let j = i + 2; j < Math.min(i + 5, lines.length); j++) {
+          const locLine = lines[j];
+          if (locLine === 'Summary' || locLine === 'Experience') break;
+          // Location pattern: City, Province/State, Country or City, Province
+          if (locLine.includes(',') && !locLine.includes('(') && locLine.length < 60) {
+            if (locLine.match(/Canada|USA|Australia|UK|India|Ontario|British Columbia|Alberta|Quebec|California|New York|Texas/i)) {
+              data.location = locLine;
+              break;
+            }
+          }
+        }
         break;
       }
     }
   }
+  console.log('Step 2 done - Name/Title/Location');
+
+  // Extract from Experience section - always prefer this for company
+  if (expIdx > -1) {
+    // Company is usually right after "Experience"
+    if (expIdx + 1 < lines.length) {
+      const expCompany = lines[expIdx + 1];
+      // Use experience company if headline company looks like a description
+      if (!data.company || data.company.includes('Aspiring') || data.company.includes('Student') ||
+          data.company.includes('Professional') || data.company.length > 50) {
+        data.company = expCompany;
+      }
+    }
+    if (expIdx + 2 < lines.length && !data.title) {
+      data.title = lines[expIdx + 2];
+    }
+  }
+  console.log('Step 3 done - Experience');
+
+  // Build experience list
+  if (expIdx > -1) {
+    const jobs = [];
+    const endIdx = eduIdx > expIdx ? eduIdx : lines.length;
+
+    for (let i = expIdx + 1; i < endIdx && jobs.length < 10; i++) {
+      const line = lines[i];
+      // Look for date patterns like "February 2024 - Present" or "2020 - 2023"
+      const dateMatch = line.match(/(\w+\s+)?(\d{4})\s*[-–]\s*(Present|\w+\s+\d{4}|\d{4})/);
+      if (dateMatch) {
+        // LinkedIn structure: Company (i-2), Title (i-1), Date (i)
+        // Based on console: lines[i-2]="Google", lines[i-1]="Sales Team Manager..."
+        let company = lines[i - 2] || '';
+        let title = lines[i - 1] || '';
+
+
+        // Skip if company looks wrong
+        if (company && !['Experience', 'Page', ''].includes(company)) {
+          // Parse start year for sorting
+          const startYear = parseInt(dateMatch[2]);
+          const isPresent = line.includes('Present');
+          jobs.push({
+            text: `${title} @ ${company} (${line})`,
+            startYear: startYear,
+            isPresent: isPresent,
+            company: company,
+            title: title
+          });
+        }
+      }
+    }
+
+    // Sort by: Present jobs first, then by start year (newest first)
+    jobs.sort((a, b) => {
+      if (a.isPresent && !b.isPresent) return -1;
+      if (!a.isPresent && b.isPresent) return 1;
+      return b.startYear - a.startYear; // Higher year = more recent = first
+    });
+
+    if (jobs.length > 0) {
+      data.experience = jobs.map(j => j.text).join(' | ');
+      // ALWAYS use company/title from most recent job
+      data.company = jobs[0].company;
+      data.title = jobs[0].title;
+      data.headline = `${data.title} at ${data.company}`;
+    }
+  }
+  console.log('Step 4 done - Experience list');
 
   // Education
-  const eduIdx = lines.findIndex(l => l.toLowerCase() === 'education');
-  if (eduIdx > 0) {
-    const schools = [], degrees = [];
+  if (eduIdx > -1) {
+    const schools = [];
+    const degrees = [];
     for (let i = eduIdx + 1; i < Math.min(eduIdx + 20, lines.length); i++) {
       const line = lines[i];
-      if (['skills', 'licenses', 'certifications', 'languages'].includes(line.toLowerCase())) break;
-      if (['University', 'College', 'Institute', 'School', 'Academy'].some(x => line.includes(x))) schools.push(line);
-      else if (['Bachelor', 'Master', 'MBA', 'PhD', 'Degree', 'B.S.', 'B.A.', 'M.S.', 'Postgraduate', 'Diploma'].some(x => line.includes(x))) {
-        degrees.push(line.split('·')[0].trim());
+      if (['Skills', 'Certifications', 'Languages', 'Licenses'].includes(line)) break;
+      if (line.includes('University') || line.includes('College') || line.includes('Institute') || line.includes('Academy')) {
+        schools.push(line);
+      }
+      // Look for degrees
+      if (line.match(/Bachelor|Master|MBA|PhD|Diploma|B\.?S\.?|B\.?A\.?|M\.?S\.?|Postgraduate|Graduate|Certificate|Associate/i)) {
+        degrees.push(line);
       }
     }
     data.school = schools.slice(0, 3).join(' | ');
     data.degree = degrees.slice(0, 3).join(' | ');
   }
+  console.log('Step 5 done - Education');
 
-  // Skills
-  const skillsIdx = lines.findIndex(l => ['skills', 'top skills'].includes(l.toLowerCase()));
-  if (skillsIdx > 0) {
+  // Skills - get lines after "Top Skills"
+  if (skillsIdx > -1) {
     const skills = [];
-    for (let i = skillsIdx + 1; i < Math.min(skillsIdx + 15, lines.length); i++) {
+    for (let i = skillsIdx + 1; i < Math.min(skillsIdx + 8, lines.length); i++) {
       const line = lines[i];
-      if (['experience', 'education', 'certifications', 'languages', 'summary'].includes(line.toLowerCase())) break;
-      if (line.length > 2 && line.length < 50) skills.push(line);
+      if (['Languages', 'Certifications', 'Experience', 'Education'].includes(line)) break;
+      if (line.length > 2 && line.length < 40 && !line.includes('(')) {
+        skills.push(line);
+      }
     }
-    data.skills = skills.slice(0, 10).join(', ');
+    data.skills = skills.join(', ');
   }
+  console.log('Step 6 done - Skills');
 
+  console.log('Final parsed data:', data);
   return data;
-}
-
-function extractName(data, nameLine) {
-  const nameClean = nameLine.split(/\s+(?:MBA|CSC|LLQP|CPA|CFA|PhD|MD|JD|PMP|CFP|,)\s*/)[0].trim().replace(/,$/, '');
-  data.full_name = nameClean;
-  const parts = nameClean.split(' ');
-  data.first_name = parts[0] || '';
-  data.last_name = parts.slice(1).join(' ') || '';
 }
 
 // Google Drive - Create folder
@@ -437,12 +605,12 @@ async function initializeSheet(sheetId) {
   if (!check.result.values || check.result.values.length === 0) {
     await gapi.client.sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: 'A1:L1',
+      range: 'A1:M1',
       valueInputOption: 'RAW',
       resource: {
         values: [[
           'First Name', 'Last Name', 'Name (LinkedIn)', 'Headline',
-          'Title', 'Company', 'Location', 'School', 'Degree', 'Skills', 'PDF Link', 'Parsed At'
+          'Title', 'Company', 'Location', 'School', 'Degree', 'Skills', 'Experience', 'PDF Link', 'Parsed At'
         ]]
       }
     });
@@ -452,7 +620,7 @@ async function initializeSheet(sheetId) {
 // Google Sheets - Append row
 async function appendToSheet(sheetId, data) {
   const linkedinFormula = data.linkedin_link
-    ? `=HYPERLINK("${data.linkedin_link}", "${data.full_name}")`
+    ? `=HYPERLINK("${data.linkedin_link}", "${data.full_name.replace(/"/g, '""')}")`
     : data.full_name;
 
   const pdfFormula = data.pdf_link
@@ -461,7 +629,7 @@ async function appendToSheet(sheetId, data) {
 
   await gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId: sheetId,
-    range: 'A:L',
+    range: 'A:M',
     valueInputOption: 'USER_ENTERED',
     resource: {
       values: [[
@@ -475,6 +643,7 @@ async function appendToSheet(sheetId, data) {
         data.school,
         data.degree,
         data.skills,
+        data.experience,
         pdfFormula,
         data.parsed_at
       ]]
